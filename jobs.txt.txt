@@ -1,0 +1,13 @@
+stress-ng --io 1 --vm 1 --vm-bytes 1G --timeout 3m
+stress-ng --io 2 --vm 2 --vm-bytes 1G --timeout 3m
+stress-ng --io 3 --vm 3 --vm-bytes 1G --timeout 3m
+stress-ng --io 4 --vm 4 --vm-bytes 1G --timeout 3m
+stress-ng --io 5 --vm 5 --vm-bytes 1G --timeout 3m
+stress-ng --io 6 --vm 6 --vm-bytes 1G --timeout 3m
+stress-ng --io 7 --vm 7 --vm-bytes 1G --timeout 3m
+stress-ng --io 8 --vm 8 --vm-bytes 1G --timeout 3m
+stress-ng --io 9 --vm 9 --vm-bytes 1G --timeout 3m
+stress-ng --io 10 --vm 10 --vm-bytes 1G --timeout 3m
+stress-ng --io 11 --vm 11 --vm-bytes 1G --timeout 3m
+stress-ng --io 12 --vm 12 --vm-bytes 1G --timeout 3m
+stress-ng --io 13 --vm 13 --vm-bytes 1G --timeout 3m
