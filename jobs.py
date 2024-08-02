@@ -5,6 +5,10 @@ import time
 
 filePath = "jobs.txt"
 config_file = "kconfig.yaml"
+node1 = "node1.reinierc-176345.ufl-eel6871-fa23-pg0.utah.cloudlab.us"
+node1_namespace = "node1-namespace"
+node2 = "node2.reinierc-176345.ufl-eel6871-fa23-pg0.utah.cloudlab.us"
+node2_namespace = "node2-namespace"
 
 # stress-ng
 # --io
@@ -19,90 +23,101 @@ config_file = "kconfig.yaml"
 """ def get_stressors(jobList):
     for job in jobList:
         create_deployments() """
+#Returns true if there are still jobs
+#False if no more jobs
+def jobs(alreadyDoneJobs, numOfPodsRequested, nodeName):
+    print(f"Already done jobs: {alreadyDoneJobs}")
 
-def jobs(numOfPods, alreadyDoneJobs):
     with open(filePath) as f:
         lines = f.readlines()[alreadyDoneJobs:]
-        jobs = lines[:numOfPods]
-        if len(jobs) != numOfPods:
-            print("No more jobs left/ took max jobs ... need to terminate")
-            return 0
-        jobs = [job.strip() for job in jobs]
-        print(jobs)
-        create_deployments(jobs, alreadyDoneJobs)
+        jobsRemainingCount = len(lines)
+        if (jobsRemainingCount -  numOfPodsRequested) > 0: ## base case, when we have more jobs in queue
+            jobsRemaining = lines[:numOfPodsRequested]
+            jobs = [job.strip() for job in jobsRemaining]
+            print(jobs)
+            create_deployments(jobs, alreadyDoneJobs,nodeName)
+            return True
+        elif ((jobsRemainingCount -  numOfPodsRequested) == 0): ## case when requested jobs and the num of jobs in queue are exact match, deploy all and terminate as no more jobs left
+            jobsRemaining = lines[:numOfPodsRequested]
+            jobs = [job.strip() for job in jobsRemaining]
+            print(jobs)
+            print("took exact match of jobs left")
+            create_deployments(jobs, alreadyDoneJobs,nodeName)
+            return False
+        elif ((jobsRemainingCount - numOfPodsRequested) < 0):## case when requested jobs are greater than the number of jobs left, deploy remaining and terminate
+            jobsRemaining = lines[:numOfPodsRequested]
+            print("took all remaining jobs... need to terminate")
+            jobs = [job.strip() for job in jobsRemaining ]
+            print(jobs)
+            create_deployments(jobs, alreadyDoneJobs,nodeName)
+            return False
 
-
-def create_deployments(stressng_commands, alreadyDoneJobs):
-
-    # Load the original YAML file
-    #with open(config_file, 'r') as file:
-    #    original_config = yaml.safe_load(file)
-
-    # Delete existing deployments
-    #original_config.pop('deployments', None)
+def create_deployments(stressng_commands, alreadyDoneJobs, nodeName):
     count = alreadyDoneJobs + 1
+
+    if nodeName == node1:
+        namespace = node1_namespace
+        curNode = "node1"
+    elif nodeName == node2:
+        namespace = node2_namespace
+        curNode = "node2"
+    else:
+        print("\n\n\n Mismatch with node names in jobs.py \n\n\n")
+
+    print(f"Creating deployment for {curNode}")
+
     # Create a Deployment for each stress-ng command
     for i, stressng_command in enumerate(stressng_commands):
-
         deployment = {
             'apiVersion': 'v1',
             'kind': 'Pod',
             'metadata': {
                 'name': f'stress-deployment-{count}',
+                'namespace': f'{namespace}',
             },
             'spec': {
                 'restartPolicy':'Never',
                 'containers': [
                             {
-                                'name': 'stress-container',
+                                'name': f'stress-container-{count}',
                                 'image': 'polinux/stress-ng:latest',
+                                'imagePullPolicy': 'IfNotPresent',
                                 'args': stressng_command.split(),
                                 'resources': {
                                     'requests': {
-                                        'cpu': '500m'
+                                        'cpu': '250m'
                                     },
                                     'limits': {
-                                        'cpu': '1000m'
+                                        'cpu': '3000m'
                                     }
                                 }
                             }
                         ],
                 'nodeSelector': {
-                    'kubernetes.io/hostname': 'node1.reinierc-176345.ufl-eel6871-fa23-pg0.utah.cloudlab.us'}
+                    'kubernetes.io/hostname': f'{nodeName}'}
                     }
                 }
 
+        #To prevent possible error of config getting rewritten, added node to name
 
-        with open(f"kconfig_{count}.yaml", 'w') as file:
-            yaml.dump(deployment,file, default_flow_style=False)
-        # f = open(f"kconfig_{count}.yaml", "w")
-        # f.write(str(deployment))
-        # f.close()
+
+        with open(f"kconfig_{count}_{curNode}.yaml", 'w') as file:
+            yaml.dump(deployment, file, default_flow_style=False)
+
         print(f"deployment{count}")
         count+=1
-        #original_config.setdefault('deployments', []).append(deployment)
-        time.sleep(15) ## to wait 15 s to take the next job
-    apply_config(len(stressng_commands),alreadyDoneJobs)
+
+    apply_config(len(stressng_commands), alreadyDoneJobs, curNode)
 
 
-def apply_config(numOfConfigs, alreadyDoneJobs):
+def apply_config(numOfConfigs, alreadyDoneJobs, curNode):
     count = alreadyDoneJobs + 1
 
     for config in range(numOfConfigs):
         # Assuming kubectl is in your PATH
-        kubectl_apply_command = f'kubectl apply -f kconfig_{count}.yaml'
+        kubectl_apply_command = f'kubectl apply -f kconfig_{count}_{curNode}.yaml'
         subprocess.run(kubectl_apply_command, shell=True)
         count+=1
 
 
-    # # Save the modified YAML back to the file
-    # with open(config_file, 'w') as file:
-    #     yaml.dump(original_config, file, default_flow_style=False)
-
-
-    # # Save the modified YAML back to the file
-    # with open('/users/Group1/python/Jotsna/kconfig.yaml', 'w') as file:
-    #     yaml.dump(original_config, file, default_flow_style=False)
-
-
-#jobs(5,3)
+#jobs(10,11)
