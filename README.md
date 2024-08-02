@@ -1,35 +1,34 @@
-Kubernetes Cluster Controller
-Overview
-This project implements a Global Controller system for managing nodes within a Kubernetes cluster environment. The controller aims to optimize resource utilization by maintaining overall CPU usage below 80% while efficiently handling job allocation across nodes.
-Features
-Global Controller for managing total number of nodes
-Local Controllers for determining MAX_PODS for each node
-Periodic job queue processing (every 15 seconds)
-Dynamic node addition and removal
-Adaptive response to CPU utilization changes
-Handling of node failures and workload fluctuations
-Controller Design
-The system uses a PID (Proportional-Integral-Derivative) controller for continuous closed-loop control. The chosen model for CPU utilization prediction is:
-text
-y(k+1) = -0.119 * y(k) + 0.105 * u(k)
+# Kubernetes Cluster Controller
 
+## Overview
+
+This project implements a Global Controller system for managing nodes within a Kubernetes cluster environment. The controller's primary objective is to optimize resource utilization by ensuring overall CPU usage stays below 80%, while efficiently allocating jobs across nodes.
+
+## Features
+
+- **Global Controller:** Manages the total number of nodes in the cluster.
+- **Local Controllers:** Determine MAX_PODS for each individual node based on resource availability.
+- **Periodic Job Queue Processing:** Jobs are processed every 15 seconds to maintain efficient workload distribution.
+- **Dynamic Node Management:** Supports dynamic addition and removal of nodes based on workload and resource demands.
+- **Adaptive CPU Utilization:** Utilizes a PID (Proportional-Integral-Derivative) controller model for adaptive response to CPU utilization changes.
+- **Fault Tolerance:** Handles node failures and workload fluctuations gracefully.
+
+## Controller Design
+
+The system employs a PID controller for continuous closed-loop control of CPU utilization. y(k+1) = -0.119 * y(k) + 0.105 * u(k)
 Where:
-y(k) is the CPU utilization at time k
-u(k) is the control input at time k
-Key Components
-Global Controller: Manages overall cluster node count
-Local Controllers: Determine MAX_PODS for individual nodes
-Job Queue Reader: Processes jobs every 15 seconds
-CPU Utilization Monitor: Tracks cluster-wide CPU usage
-Implementation
-The controller is implemented in Python and integrates with the Kubernetes API for cluster management.
-Usage
-[Include instructions on how to set up and run the controller]
-Results
-The controller successfully maintains CPU utilization around the target threshold (80%) by dynamically adjusting the number of nodes and pods in the cluster.
-Contributors
-Reinier Cruz Carnero
-Anurag Chakraborty
-Jotsna Gowda
-Sumith Reddy Gutha
-Darshini Ram Mattaparthi
+- `y(k)`: CPU utilization at time k.
+- `u(k)`: Control input at time k.
+
+## Key Components
+
+- **Global Controller:** Manages overall cluster node count.
+- **Local Controllers:** Calculate and enforce MAX_PODS for individual nodes.
+- **Job Queue Reader:** Processes job queues every 15 seconds.
+- **CPU Utilization Monitor:** Tracks cluster-wide CPU usage.
+
+## Implementation
+
+The controller is implemented in Python and integrates with the Kubernetes API for seamless cluster management. In our case we implemented the entire scenario in CloudLab.
+
+
